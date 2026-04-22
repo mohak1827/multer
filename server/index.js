@@ -10,14 +10,20 @@ const apiRoutes = require("./routes/upload");
 const app = express();
 const server = http.createServer(app);
 
-// Client URL for CORS
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+// Allowed origins — production + local dev
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://multer-sigma.vercel.app",
+].filter(Boolean);
 
 // Socket.IO — attached to same HTTP server
 const io = new Server(server, {
   cors: {
-    origin: CLIENT_URL,
+    origin: allowedOrigins,
     methods: ["GET", "POST", "DELETE"],
+    credentials: true,
   },
 });
 
@@ -25,7 +31,7 @@ const io = new Server(server, {
 app.set("io", io);
 
 // Middleware
-app.use(cors({ origin: CLIENT_URL }));
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -54,7 +60,7 @@ const startServer = async () => {
   server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📡 Socket.IO ready for connections`);
-    console.log(`🌐 CORS origin: ${CLIENT_URL}`);
+    console.log(`🌐 CORS origins: ${allowedOrigins.join(", ")}`);
   });
 };
 
